@@ -170,7 +170,7 @@ export function getRaceProximity(
         : NaN
       return { raceType: race.raceType ?? null, label: raceDisplayName(race), daysUntil }
     })
-    .filter((race): race is PrioritizeRaceInfo => Number.isFinite(race.daysUntil))
+    .filter((race) => Number.isFinite(race.daysUntil))
     .sort((a, b) => a.daysUntil - b.daysUntil)
 }
 
