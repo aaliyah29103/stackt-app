@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import {
   ActivityBadgeIcon,
@@ -14,6 +14,12 @@ import ConfirmDialog from '../components/ConfirmDialog'
 import SettingsSection from '../components/SettingsSection'
 import SettingsRow from '../components/SettingsRow'
 import Toast from '../components/Toast'
+import {
+  downloadBackup,
+  parseBackup,
+  restoreBackup,
+  type BackupFile,
+} from '../lib/backup'
 import { appendBlankRace, raceDateLabel, raceDisplayName } from '../lib/race'
 import { useLocalStorage } from '../lib/useLocalStorage'
 import {
@@ -143,6 +149,35 @@ function Settings() {
   const confirmClearData = () => {
     clearData()
     setShowClearDataConfirm(false)
+  }
+
+  const importInputRef = useRef<HTMLInputElement>(null)
+  const [showExported, setShowExported] = useState(false)
+  const [pendingImport, setPendingImport] = useState<BackupFile | null>(null)
+  const [importError, setImportError] = useState<string | null>(null)
+
+  const exportBackup = () => {
+    downloadBackup()
+    setShowExported(true)
+    setTimeout(() => setShowExported(false), 2000)
+  }
+
+  const handleImportFile = async (file: File | undefined) => {
+    if (!file) return
+    try {
+      setPendingImport(parseBackup(await file.text()))
+    } catch (error) {
+      setImportError(
+        error instanceof Error ? error.message : 'Could not read that file.',
+      )
+    }
+  }
+
+  const confirmImport = () => {
+    if (!pendingImport) return
+    restoreBackup(pendingImport)
+    // Full reload so every screen re-reads the restored data from storage.
+    window.location.assign('/')
   }
 
   return (
@@ -447,7 +482,29 @@ function Settings() {
           </SettingsRow>
         </SettingsSection>
 
-        <SettingsSection title="Data">
+        <SettingsSection
+          title="Data"
+          description="Your data lives only in this browser. Export a backup to keep it safe or move it to another device."
+        >
+          <SettingsRow label="Export backup" onClick={exportBackup}>
+            <span className="text-[13px] text-gray-400">Download .json</span>
+          </SettingsRow>
+          <SettingsRow
+            label="Import backup"
+            onClick={() => importInputRef.current?.click()}
+          >
+            <span className="text-[13px] text-gray-400">Choose file</span>
+          </SettingsRow>
+          <input
+            ref={importInputRef}
+            type="file"
+            accept="application/json,.json"
+            className="hidden"
+            onChange={(event) => {
+              void handleImportFile(event.target.files?.[0])
+              event.target.value = ''
+            }}
+          />
           <button
             type="button"
             onClick={() => setShowClearDataConfirm(true)}
@@ -459,6 +516,26 @@ function Settings() {
       </div>
 
       <Toast message="Profile saved" show={showProfileSaved} />
+      <Toast message="Backup downloaded" show={showExported} />
+
+      <ConfirmDialog
+        open={!!pendingImport}
+        title="Replace My Data"
+        description="This will replace all your current sessions, templates, races, and settings with the contents of the backup file. This action cannot be undone."
+        confirmLabel="Replace"
+        variant="danger"
+        onConfirm={confirmImport}
+        onCancel={() => setPendingImport(null)}
+      />
+
+      <ConfirmDialog
+        open={!!importError}
+        variant="neutral"
+        title="Can't Import Backup"
+        description={importError ?? ''}
+        options={[{ label: 'OK', onSelect: () => setImportError(null) }]}
+        onDismiss={() => setImportError(null)}
+      />
 
       <ConfirmDialog
         open={!!pendingDeleteRace}
