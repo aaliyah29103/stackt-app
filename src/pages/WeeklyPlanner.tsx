@@ -126,15 +126,9 @@ function SessionCard({
 }: SessionCardProps) {
   return (
     <div className="relative h-16 w-full">
-      {session.completed ? (
-        <Link to={`/session?id=${session.id}`} className={SESSION_CARD_CLASS}>
-          {sessionCardContent(session, isConflicting, onConflictClick)}
-        </Link>
-      ) : (
-        <div className={SESSION_CARD_CLASS}>
-          {sessionCardContent(session, isConflicting, onConflictClick)}
-        </div>
-      )}
+      <Link to={`/session?id=${session.id}`} className={SESSION_CARD_CLASS}>
+        {sessionCardContent(session, isConflicting, onConflictClick)}
+      </Link>
       <button
         type="button"
         onClick={onDelete}

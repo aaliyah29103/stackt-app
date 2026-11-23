@@ -141,12 +141,16 @@ function CompletedSession() {
         </p>
       ) : (
         <>
-          <span className="mt-6 flex w-fit items-center gap-1.5 rounded-full bg-success-bg py-1.5 pr-3 pl-2 text-xs font-bold text-success">
-            <CheckIcon className="h-2.5 w-2" />
-            Completed
-          </span>
+          {session.completed && (
+            <span className="mt-6 flex w-fit items-center gap-1.5 rounded-full bg-success-bg py-1.5 pr-3 pl-2 text-xs font-bold text-success">
+              <CheckIcon className="h-2.5 w-2" />
+              Completed
+            </span>
+          )}
 
-          <h1 className="mt-3 text-3xl font-black tracking-tight text-ink">
+          <h1
+            className={`text-3xl font-black tracking-tight text-ink ${session.completed ? 'mt-3' : 'mt-6'}`}
+          >
             Session Details
           </h1>
 
